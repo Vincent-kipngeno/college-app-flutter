@@ -1,24 +1,35 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'models/my_user.dart';
 import 'models/string_extension.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 typedef MyValidateCallback = String? Function(String? value);
 
-class Registration extends StatefulWidget{
-  const Registration({Key? key}) : super(key: key);
+class Login extends StatefulWidget{
+  const Login({Key? key}) : super(key: key);
 
   @override
-  _RegistrationState createState() => _RegistrationState();
+  _LoginState createState() => _LoginState();
 }
 
-class _RegistrationState extends State<Registration>{
+class _LoginData{
+  late String email, password;
+
+  void setEmail(String? value){
+    email = value?? "";
+  }
+
+  void setPassword(String? value){
+    password = value?? "";
+  }
+}
+
+class _LoginState extends State<Login>{
 
   final _formKey = GlobalKey<FormState>();
   FirebaseDatabase database = FirebaseDatabase.instance;
-  final MyUser _user = MyUser();
+  final _LoginData _user = _LoginData();
 
   String? password;
   String? errorMsg;
@@ -52,30 +63,6 @@ class _RegistrationState extends State<Registration>{
     return null;
   }
 
-  String? _validateName(String? value) {
-    try {
-      if (value!.isEmpty) {
-        return 'User Name should not be empty.';
-      }
-    } catch (e) {
-      return 'User name should not be empty.';
-    }
-
-    return null;
-  }
-
-  String? _validatePhone(String? value) {
-    try {
-      if (!value!.isValidPhone) {
-        return 'Phone Number must be up to 10 digits';
-      }
-    } catch (e) {
-      return 'Phone Number must be up to 10 digits';
-    }
-
-    return null;
-  }
-
   String? _validatePassword(String? value) {
     password = value;
     try {
@@ -89,18 +76,6 @@ class _RegistrationState extends State<Registration>{
     return null;
   }
 
-  String? _validateConfirmPassword(String? value) {
-    try {
-      if (value! != password) {
-        return 'Confirm Password should match password';
-      }
-    } catch (e) {
-      return 'Confirm Password should match password';
-    }
-
-    return null;
-  }
-
   void submit() async{
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
@@ -109,7 +84,7 @@ class _RegistrationState extends State<Registration>{
       });
 
       try {
-        UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
             email: _user.email,
             password: _user.password
         );
@@ -131,12 +106,12 @@ class _RegistrationState extends State<Registration>{
 
 
   Widget textFormField({required MyValidateCallback validateField,
-      required ValueChanged<String?>? setValue,
-      required String label,
-      required String hint,
-      required Icon icon,
-      required String? error,
-      required bool isPassword,})
+    required ValueChanged<String?>? setValue,
+    required String label,
+    required String hint,
+    required Icon icon,
+    required String? error,
+    required bool isPassword,})
   {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -188,38 +163,23 @@ class _RegistrationState extends State<Registration>{
     );
   }
 
+  void startRegistrationRoute(){
+    print("hello");
+    var sum = 1+3;
+  }
+
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
 
-    final usernameBox = textFormField(
-      validateField: _validateName,
-      setValue: _user.setUserName,
-      label: "Enter username",
-      hint: "my name",
-      icon: const Icon(Icons.person, size: 20.0, color: Color(0xff66C047)),
-      error: null,
-      isPassword: false,
-    );
-
-    final phoneBox = textFormField(
-      validateField: _validatePhone,
-      setValue: _user.setPhone,
-      label: "Enter phone",
-      hint: "0705291094",
-      icon: const Icon(Icons.phone, size: 20.0, color: Color(0xff66C047)),
-      error: null,
-      isPassword: false,
-    );
-
     final emailBox = textFormField(
-        validateField: _validateEmail,
-        setValue: _user.setEmail,
-        label: "Enter Email",
-        hint: "you@gmail.com",
-        icon: const Icon(Icons.email, size: 20.0, color: Color(0xff66C047)),
-        error: errorMsg,
-        isPassword: false,
+      validateField: _validateEmail,
+      setValue: _user.setEmail,
+      label: "Enter Email",
+      hint: "you@gmail.com",
+      icon: const Icon(Icons.email, size: 20.0, color: Color(0xff66C047)),
+      error: errorMsg,
+      isPassword: false,
     );
 
     final passwordBox = textFormField(
@@ -232,32 +192,38 @@ class _RegistrationState extends State<Registration>{
       isPassword: true,
     );
 
-    final confirmPasswordBox = textFormField(
-      validateField: _validateConfirmPassword,
-      setValue: null,
-      label: "Enter Confirm Password",
-      hint: "Confirm Password",
-      icon: const Icon(Icons.lock, size: 20.0, color: Color(0xff66C047)),
-      error: null,
-      isPassword: true,
+    final loginButton = Container(
+      width: 100,
+      height: 38,
+      margin: const EdgeInsets.symmetric(vertical: 20),
+      child: ElevatedButton(
+        child: const Center(child: Text('Login'),),
+        onPressed: submit,
+        style: ElevatedButton.styleFrom(
+            primary: const Color(0xff66C047),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold)),
+      ),
     );
 
-    final regButton = Container(
-        width: 100,
-        height: 38,
-        margin: const EdgeInsets.symmetric(vertical: 20),
-        child: ElevatedButton(
-          child: const Text('Sign Up'),
-          onPressed: submit,
-          style: ElevatedButton.styleFrom(
-              primary: const Color(0xff66C047),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              textStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold)),
-        ),
-      );
-
+    final signupMsg = Container(
+      height: 38,
+      margin: const EdgeInsets.symmetric(vertical: 20),
+      child: Row(
+        children:  <Widget>[
+          const Text("Do not have an account yet?",
+            style: TextStyle(color: Colors.white),),
+          TextButton(
+              onPressed: startRegistrationRoute,
+              child: const Text("Sign Up",
+                style: TextStyle(color: Color(0xff66C047)),
+              ),
+          ),
+        ],
+      ),
+    );
     final form = Form(
       key: _formKey,
       child: Center(
@@ -265,12 +231,9 @@ class _RegistrationState extends State<Registration>{
             shrinkWrap: true,
             padding: const EdgeInsets.all(50.0),
             children: [
-              Center(child: usernameBox,),
-              Center(child: phoneBox,),
               Center(child: emailBox,),
               Center(child: passwordBox,),
-              Center(child: confirmPasswordBox,),
-              Align(child: regButton, alignment: Alignment.centerLeft,),
+              Align(child: loginButton, alignment: Alignment.centerLeft,),
             ]
         ),
       ),
@@ -278,7 +241,7 @@ class _RegistrationState extends State<Registration>{
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Registration"),
+        title: const Text("Login"),
       ),
       body: form,
       backgroundColor: const Color(0xff021606),
