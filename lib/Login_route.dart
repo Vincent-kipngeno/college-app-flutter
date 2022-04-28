@@ -1,3 +1,5 @@
+import 'package:college_app/JoinGroup_route.dart';
+import 'package:college_app/registration_route.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'models/string_extension.dart';
@@ -46,7 +48,7 @@ class _LoginState extends State<Login>{
       if (user == null) {
         print('User is currently signed out!');
       } else {
-        print('User is signed in!');
+        _navigateToJoinGroup(context);
       }
     });
   }
@@ -164,8 +166,32 @@ class _LoginState extends State<Login>{
   }
 
   void startRegistrationRoute(){
-    print("hello");
-    var sum = 1+3;
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (BuildContext context) {
+        return const Registration();
+      },
+    ));
+  }
+
+  void _navigateToJoinGroup(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (BuildContext context) {
+        return Scaffold(
+          appBar: AppBar(
+            elevation: 1.0,
+            title: Text(
+              "Join Group",
+              style: Theme.of(context).textTheme.headline4,
+            ),
+          ),
+          body: const JoinGroup(),
+          backgroundColor: const Color(0xff021606),
+          // This prevents the attempt to resize the screen when the keyboard
+          // is opened
+          resizeToAvoidBottomInset: false,
+        );
+      },
+    ));
   }
 
   @override
@@ -233,6 +259,7 @@ class _LoginState extends State<Login>{
             children: [
               Center(child: emailBox,),
               Center(child: passwordBox,),
+              Align(child: signupMsg, alignment: Alignment.centerLeft,),
               Align(child: loginButton, alignment: Alignment.centerLeft,),
             ]
         ),
@@ -246,5 +273,6 @@ class _LoginState extends State<Login>{
       body: form,
       backgroundColor: const Color(0xff021606),
     );
+
   }
 }

@@ -1,9 +1,9 @@
+import 'package:college_app/Login_route.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'models/my_user.dart';
 import 'models/string_extension.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 typedef MyValidateCallback = String? Function(String? value);
 
@@ -15,7 +15,6 @@ class Registration extends StatefulWidget{
 }
 
 class _RegistrationState extends State<Registration>{
-
   final _formKey = GlobalKey<FormState>();
   FirebaseDatabase database = FirebaseDatabase.instance;
   final MyUser _user = MyUser();
@@ -24,6 +23,8 @@ class _RegistrationState extends State<Registration>{
   String? errorMsg;
   String? passErrMsg;
 
+  DatabaseReference userRef = FirebaseDatabase.instance.ref("users");
+
   @override
   void initState() {
     // TODO: implement initState
@@ -31,13 +32,34 @@ class _RegistrationState extends State<Registration>{
 
     FirebaseAuth.instance
         .userChanges()
-        .listen((User? user) {
-      if (user == null) {
-        print('User is currently signed out!');
-      } else {
-        print('User is signed in!');
+        .listen((User? user) async {
+          
+      if (user != null) {
+
+
+
+        try{
+          await userRef.child(_user.uid).set(_user.userMap());
+          startLoginRoute();
+        }
+        on Exception catch(e){
+          setState(() {
+            errorMsg = "Check network connection";
+          });
+        }
+        
       }
+      
     });
+    
+  }
+
+  void startLoginRoute(){
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (BuildContext context) {
+        return const Login();
+      },
+    ));
   }
 
   String? _validateEmail(String? value) {
