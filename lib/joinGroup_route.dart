@@ -117,7 +117,7 @@ class _JoinGroupState extends State<JoinGroup>{
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Center(child: codeField,),
-              Align(child: joinButton, alignment: Alignment.centerLeft,),
+              Align(child: joinButton, alignment: Alignment.center,),
             ]
         ),
       ),

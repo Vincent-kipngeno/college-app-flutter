@@ -1,4 +1,4 @@
-import 'package:college_app/JoinGroup_route.dart';
+import 'package:college_app/joinGroup_route.dart';
 import 'package:college_app/registration_route.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
