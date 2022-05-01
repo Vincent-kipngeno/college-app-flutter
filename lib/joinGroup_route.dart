@@ -1,3 +1,4 @@
+import 'package:college_app/group_chat_route.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'models/string_extension.dart';
@@ -14,7 +15,7 @@ class _JoinGroupState extends State<JoinGroup>{
 
   final _formKey = GlobalKey<FormState>();
 
-  String? code;
+  late String code;
   String? errorMsg;
 
   void setCode(String? value){
@@ -33,13 +34,21 @@ class _JoinGroupState extends State<JoinGroup>{
     return null;
   }
 
+  void startGroupChatRoute(){
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (BuildContext context) {
+        return ChatRoute(groupCode: code);
+      },
+    ));
+  }
+
   void submit() async{
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       setState(() {
         errorMsg = null;
       });
-
+      startGroupChatRoute();
     }
   }
 

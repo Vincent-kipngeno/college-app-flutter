@@ -1,4 +1,6 @@
 import 'dart:collection';
+import 'package:intl/intl.dart';
+
 
 class Chat{
 
@@ -12,7 +14,7 @@ class Chat{
         time = chat["time"];
 
   late String message, senderId, groupCode;
-  late BigInt time;
+  late int time;
 
   void setMessage(String? value) {
     message = value?? "";
@@ -26,12 +28,15 @@ class Chat{
     groupCode = value?? "";
   }
 
-  void setTime(BigInt? value) {
+  void setTime(int? value) {
     time = value!;
   }
 
+  String formattedTime(){
+    return DateFormat('HH:mm').format(DateTime.fromMillisecondsSinceEpoch(time));
+  }
 
-  Map<String, dynamic> chatMap(){
+  Map<String, dynamic> toMap(){
     Map<String,dynamic> chat = HashMap();
     chat["message"] = message;
     chat["senderId"] = senderId;
