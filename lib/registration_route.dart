@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'models/my_user.dart';
 import 'models/string_extension.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 typedef MyValidateCallback = String? Function(String? value);
 
@@ -22,6 +23,7 @@ class _RegistrationState extends State<Registration>{
   String? password;
   String? errorMsg;
   String? passErrMsg;
+  DateTime? currentBackPressTime;
 
   DatabaseReference userRef = FirebaseDatabase.instance.ref("users");
 
@@ -35,12 +37,9 @@ class _RegistrationState extends State<Registration>{
         .listen((User? user) async {
           
       if (user != null) {
-
-
-
+        _user.setUid(user.uid);
         try{
-          await userRef.child(_user.uid).set(_user.userMap());
-          startLoginRoute();
+          userRef.child(user.uid).set(_user.userMap()).whenComplete(() => startLoginRoute());
         }
         on Exception catch(e){
           setState(() {
@@ -210,6 +209,26 @@ class _RegistrationState extends State<Registration>{
     );
   }
 
+  void _startLoginRoute(){
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (BuildContext context) {
+        return const Login();
+      },
+    ));
+  }
+
+
+  Future<bool> onWillPop() {
+    DateTime now = DateTime.now();
+    if (currentBackPressTime == null ||
+        now.difference(currentBackPressTime!) > const Duration(seconds: 2)) {
+      currentBackPressTime = now;
+      Fluttertoast.showToast(msg: "Press the back button again");
+      return Future.value(false);
+    }
+    return Future.value(true);
+  }
+
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
@@ -280,6 +299,23 @@ class _RegistrationState extends State<Registration>{
         ),
       );
 
+    final loginMsg = Container(
+      height: 38,
+      margin: const EdgeInsets.symmetric(vertical: 20),
+      child: Row(
+        children:  <Widget>[
+          const Text("Already have an account?",
+            style: TextStyle(color: Colors.white),),
+          TextButton(
+            onPressed: _startLoginRoute,
+            child: const Text("Login",
+              style: TextStyle(color: Color(0xff66C047)),
+            ),
+          ),
+        ],
+      ),
+    );
+
     final form = Form(
       key: _formKey,
       child: Center(
@@ -292,18 +328,23 @@ class _RegistrationState extends State<Registration>{
               Center(child: emailBox,),
               Center(child: passwordBox,),
               Center(child: confirmPasswordBox,),
+              Align(child: loginMsg, alignment: Alignment.centerLeft,),
               Align(child: regButton, alignment: Alignment.centerLeft,),
             ]
         ),
       ),
     );
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Registration"),
-      ),
-      body: form,
-      backgroundColor: const Color(0xff021606),
+    return WillPopScope(
+        onWillPop: () async => true,
+        child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: const Color(0xff253412),
+            title: const Text("Registration"),
+          ),
+          body: form,
+          backgroundColor: const Color(0xff021606),
+        ),
     );
   }
 }

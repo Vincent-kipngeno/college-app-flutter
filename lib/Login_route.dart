@@ -1,10 +1,11 @@
+import 'dart:io';
+
 import 'package:college_app/joinGroup_route.dart';
 import 'package:college_app/registration_route.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'models/string_extension.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 typedef MyValidateCallback = String? Function(String? value);
 
@@ -106,7 +107,6 @@ class _LoginState extends State<Login>{
     }
   }
 
-
   Widget textFormField({required MyValidateCallback validateField,
     required ValueChanged<String?>? setValue,
     required String label,
@@ -176,22 +176,9 @@ class _LoginState extends State<Login>{
   void _navigateToJoinGroup(BuildContext context) {
     Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (BuildContext context) {
-        return Scaffold(
-          appBar: AppBar(
-            elevation: 1.0,
-            title: Text(
-              "Join Group",
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ),
-          body: const JoinGroup(),
-          backgroundColor: const Color(0xff021606),
-          // This prevents the attempt to resize the screen when the keyboard
-          // is opened
-          resizeToAvoidBottomInset: false,
-        );
+        return const JoinGroup();
       },
-    ));
+    ),);
   }
 
   @override
@@ -266,12 +253,19 @@ class _LoginState extends State<Login>{
       ),
     );
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Login"),
-      ),
-      body: form,
-      backgroundColor: const Color(0xff021606),
+    return WillPopScope(
+        onWillPop: () async  {
+          exit(0);
+          return false;
+          },
+        child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: const Color(0xff253412),
+            title: const Text("Login"),
+          ),
+          body: form,
+          backgroundColor: const Color(0xff021606),
+        ),
     );
 
   }

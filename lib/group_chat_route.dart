@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:college_app/models/my_user.dart';
 import 'package:college_app/services/sqLite.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -12,6 +13,7 @@ import 'models/chat.dart';
 
 Icon emoji = const Icon(Icons.emoji_emotions_outlined, size: 30 , color: Color(0xffA8B0A2));
 ImageIcon sendBtn = const ImageIcon(AssetImage("assets/images/send_button.png"), size: 30,);
+DatabaseReference userRef = FirebaseDatabase.instance.ref("users");
 
 class ChatRoute extends StatefulWidget{
   const ChatRoute({Key? key, required this.groupCode}) : super(key: key);
@@ -27,8 +29,7 @@ class _ChatRouteState extends State<ChatRoute>{
   final TextEditingController _editingController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   late List<Chat> _chats = <Chat>[];
-  late String _code;
-  late SqLiteDbHelper _sqLiteDb;
+  late String _code, _usrName;
 
   late DatabaseReference _chatRef;
   late String _messageSenderId;
@@ -50,27 +51,30 @@ class _ChatRouteState extends State<ChatRoute>{
           .userChanges()
           .listen((User? user) {
         if (user != null) {
-          setState(() {
-            _messageSenderId = user.uid;
-          });
+
+          if (mounted){
+            setState(() {
+              _messageSenderId = user.uid;
+            });
+          }
+
         }
       });
 
-      _sqLiteDb = SqLiteDbHelper();
-      await _sqLiteDb.initializer();
-
-      _chats = await _sqLiteDb.chats();
+      _chats = await SqLiteDbHelper.instance.chats(_code);
 
       chatListen = _chatRef.onValue.listen((DatabaseEvent event) async{
         if (event.snapshot.exists){
 
           Chat chat = Chat.fromMap(event.snapshot.value as Map<dynamic, dynamic>);
-          await _sqLiteDb.insertChat(chat);
+          await SqLiteDbHelper.instance.insertChat(chat);
 
-          _sqLiteDb.chats().then((value)  {
-            setState(() {
-              _chats = value;
-            });
+          SqLiteDbHelper.instance.chats(_code).then((value)  {
+            if (mounted){
+              setState(() {
+                _chats = value;
+              });
+            }
 
           });
 
@@ -78,7 +82,9 @@ class _ChatRouteState extends State<ChatRoute>{
         }
       });
 
-      setState(() {});
+      if (mounted){
+        setState(() {});
+      }
 
     });
 
@@ -90,16 +96,11 @@ class _ChatRouteState extends State<ChatRoute>{
 
     WidgetsBinding.instance?.addPostFrameCallback((_) async {
 
-      _sqLiteDb = SqLiteDbHelper();
-      await _sqLiteDb.initializer();
+      _chats = await SqLiteDbHelper.instance.chats(_code);
 
-      _sqLiteDb.chats().then((value)  {
-        setState(() {
-          _chats = value;
-        });
-
-      });
-
+      if (mounted){
+        setState(() {});
+      }
     });
 
   }
@@ -107,14 +108,21 @@ class _ChatRouteState extends State<ChatRoute>{
   @override
   void dispose(){
     super.dispose();
-    _sqLiteDb.dbClose();
     chatListen.cancel();
   }
 
   void _sendMessage (String chatMsg) async{
-    Chat chat = Chat.construct(message: chatMsg, senderId: _messageSenderId, groupCode: _code, time: DateTime.now().millisecondsSinceEpoch);
-    await _chatRef.update(chat.toMap());
-    _editingController.text = "";
+    userRef.child(_messageSenderId).onValue.listen((DatabaseEvent event) async{
+      if (event.snapshot.exists) {
+        MyUser usr = MyUser.fromMap(
+            event.snapshot.value as Map<dynamic, dynamic>);
+        _usrName = usr.username;
+
+        Chat chat = Chat.construct(message: chatMsg, senderId: _messageSenderId, groupCode: _code, time: DateTime.now().millisecondsSinceEpoch, userName: _usrName);
+        await _chatRef.update(chat.toMap());
+        _editingController.text = "";
+      }
+    });
   }
 
   Widget _sendMessageView(){
@@ -131,7 +139,7 @@ class _ChatRouteState extends State<ChatRoute>{
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                     color: const Color(0xff2D4228),
-                    borderRadius: BorderRadius.circular(20.0),
+                    borderRadius: BorderRadius.circular(50.0),
                     border: Border.all(color: const Color(0xff2D4228), width: 2.0),
               ),
               child: Column(
@@ -142,24 +150,27 @@ class _ChatRouteState extends State<ChatRoute>{
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: <Widget>[
                       Flexible(
-                          child: Container(
-                            height:30,
-                            child: TextField(
-                              textAlignVertical: TextAlignVertical.center,
-                              controller: _editingController,
-                              focusNode: _focusNode,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 15.0,
-                                height: 1.0,
-                              ),
-                              decoration: const InputDecoration(
-                                hintText: "Enter message",
-                                hintStyle: TextStyle(color: Color(0xffA8B0A2)),
-                                fillColor: Color(0xff2D4228),
-                                filled: true,
-                                contentPadding: EdgeInsets.all(12.5),
-                                border: InputBorder.none,
+                          child: SizedBox(
+                            height:40,
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: TextField(
+                                textAlignVertical: TextAlignVertical.center,
+                                controller: _editingController,
+                                focusNode: _focusNode,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  //fontSize: 15.0,
+                                  //height: 1.0,
+                                ),
+                                decoration: const InputDecoration(
+                                  hintText: "Enter message",
+                                  hintStyle: TextStyle(color: Color(0xffA8B0A2)),
+                                  fillColor: Color(0xff2D4228),
+                                  filled: true,
+                                  //contentPadding: EdgeInsets.only(left: 12.5, bottom: 5),
+                                  border: InputBorder.none,
+                                ),
                               ),
                             ),
                           ),
@@ -178,19 +189,19 @@ class _ChatRouteState extends State<ChatRoute>{
           Container(
             height: 45,
             width: 45,
-            padding: const EdgeInsets.only(left: 2, bottom: 4),
-            margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 3),
+            padding: const EdgeInsets.only(left: 2),
+            margin: const EdgeInsets.only(left: 5),
             decoration: BoxDecoration(
               color: const Color(0xff2D4228),
               borderRadius: BorderRadius.circular(100.0),
               border: Border.all(color: const Color(0xff2D4228), width: 0.0),
             ),
             child: Align(
-              alignment: Alignment.topCenter,
+              alignment: Alignment.center,
               child: IconButton(
                 icon: const Icon(
                   Icons.send_outlined,
-                  size: 30,
+                  size: 20,
                   color: Colors.white,
                 ),
                 onPressed: () {
@@ -206,6 +217,7 @@ class _ChatRouteState extends State<ChatRoute>{
   }
 
   Widget _buildChatWidgets() {
+
     return ListView.builder(
       controller: _controller,
       itemBuilder: (BuildContext context, int index) {
@@ -213,10 +225,12 @@ class _ChatRouteState extends State<ChatRoute>{
         return ChatTile(
           chat: _chat,
           uid: _messageSenderId,
+          username: _chat.userName,
         );
       },
       itemCount: _chats.length,
     );
+
   }
 
   @override
@@ -227,6 +241,7 @@ class _ChatRouteState extends State<ChatRoute>{
     // TODO: implement build
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xff253412),
         title: Text(_code),
         elevation: 2,
       ),
@@ -234,7 +249,7 @@ class _ChatRouteState extends State<ChatRoute>{
         child: Stack(
           children: <Widget>[
             Container(
-              padding: const EdgeInsets.only(left: 5, right: 5, bottom: 50, top: 5),
+              padding: const EdgeInsets.only(left: 5, right: 5, bottom: 60, top: 5),
               color: Colors.black,
               child: _buildChatWidgets(),
             ),

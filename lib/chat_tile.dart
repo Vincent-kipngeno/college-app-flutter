@@ -1,12 +1,6 @@
-import 'package:college_app/models/my_user.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 import 'models/chat.dart';
-
-DatabaseReference userRef = FirebaseDatabase.instance.ref("users");
 
 class CustomChatBubble extends CustomPainter {
   CustomChatBubble({required this.color, required this.isOwn});
@@ -54,10 +48,11 @@ class CustomChatBubble extends CustomPainter {
 
 class ChatTile extends StatefulWidget{
 
-  const ChatTile({Key? key, required this.chat, required this.uid}) : super(key: key);
+  const ChatTile({Key? key, required this.chat, required this.uid, required this.username}) : super(key: key);
 
   final Chat chat;
-  final String uid;
+  final String uid, username;
+
 
   @override
   State<ChatTile> createState() => ChatTileState();
@@ -66,33 +61,17 @@ class ChatTile extends StatefulWidget{
 
 class ChatTileState extends State<ChatTile> {
 
-  //final TextEditingController _editingController = TextEditingController();
-  //final FocusNode _focusNode = FocusNode();
   final TextStyle textStyle = const TextStyle(color: Colors.white);
   late Chat chat;
-  late String uid = "";
-  String? userName;
+  String uid = "";
+  String username = "";
 
   @override
   void initState() {
     super.initState;
     chat = widget.chat;
     uid = widget.uid;
-
-    WidgetsBinding.instance?.addPostFrameCallback((_) async {
-      userRef.child(chat.senderId).onValue.listen((DatabaseEvent event) async{
-        if (event.snapshot.exists){
-
-          var usr = MyUser.fromMap(event.snapshot.value as Map<dynamic, dynamic>);
-          setState(() {
-            userName = usr.username;
-          });
-
-        }
-      });
-
-      //setState(() {});
-    });
+    username = widget.username;
   }
 
   @override
@@ -101,7 +80,7 @@ class ChatTileState extends State<ChatTile> {
 
     if (uid == chat.senderId){
       userChatTile = Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(5),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -113,7 +92,7 @@ class ChatTileState extends State<ChatTile> {
                   children: <Widget>[
                     Flexible(
                       child: Container(
-                        margin: const EdgeInsets.only(left: 15),
+                        margin: const EdgeInsets.only(left: 15, right: 10),
                         child: CustomPaint(
                           painter: CustomChatBubble(color: const Color(0xff253412) ,isOwn: true,),
                           child: Container(
@@ -145,37 +124,44 @@ class ChatTileState extends State<ChatTile> {
     }
 
     if (uid != chat.senderId){
-      print("uid: $uid ${chat.senderId}");
       userChatTile = Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(5),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
-
+          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Align(
               child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                   child: Text(
-                    userName??"",
-                    style: const TextStyle(color: Color(0xff379417)),
+                    username,
+                    style: const TextStyle(color: Colors.grey),
                   )
               ),
               alignment: Alignment.centerLeft,
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: <Widget>[
-                CustomPaint(
-                  painter: CustomChatBubble(color: Colors.blue ,isOwn: false),
-                  child: Container(
-                      padding: const EdgeInsets.all(8),
-                      child: Text(
-                        chat.message,
-                        style: const TextStyle(color: Colors.grey),
-                      )
+            Flexible(
+              fit: FlexFit.loose,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: <Widget>[
+                  Flexible(
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 15, left: 10),
+                      child: CustomPaint(
+                        painter: CustomChatBubble(color: const Color(0xff379417) ,isOwn: false,),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          child: Text(
+                            chat.message,
+                            style: textStyle,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             Align(
               child: Container(

@@ -19,6 +19,7 @@ class SqLiteDbHelper{
   static const columnSenderId = 'senderId';
   static const columnGroupCode = 'groupCode';
   static const columnTime = 'time';
+  static const columnUsername = 'username';
 
   SqLiteDbHelper._privateConstructor();
   static final SqLiteDbHelper instance = SqLiteDbHelper._privateConstructor();
@@ -38,7 +39,7 @@ class SqLiteDbHelper{
       join(await getDatabasesPath(), _databaseName),
       onCreate: (db, version) {
         return db.execute(
-          'CREATE TABLE $table($columnId INTEGER PRIMARY KEY, $columnMessage TEXT, $columnSenderId TEXT, $columnGroupCode TEXT, $columnTime INTEGER)',
+          'CREATE TABLE $table($columnId INTEGER PRIMARY KEY, $columnMessage TEXT, $columnSenderId TEXT, $columnGroupCode TEXT, $columnTime INTEGER, $columnUsername TEXT);',
         );
       },
       version: _databaseVersion,
@@ -47,18 +48,25 @@ class SqLiteDbHelper{
   }
 
   Future<void> insertChat(Chat chat) async {
-    final db = await database;
+    final db = await SqLiteDbHelper.instance.database;
     await db!.insert(
-      table,
+      SqLiteDbHelper.table,
       chat.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
-  Future<List<Chat>> chats() async {
-    final db = await database;
+  Future<List<Chat>> chats(String code) async {
+    String whereString = '${SqLiteDbHelper.columnGroupCode} = ?';
+    List<dynamic> whereArguments = [code];
 
-    final List<Map<String, dynamic>> maps = await db!.query(table);
+    final db = await SqLiteDbHelper.instance.database;
+
+    final List<Map<String, dynamic>> maps = await db!.query(
+        SqLiteDbHelper.table,
+        where: whereString,
+        whereArgs: whereArguments,
+    );
 
 
     return List.generate(maps.length, (i) {
@@ -69,7 +77,7 @@ class SqLiteDbHelper{
   }
 
   void dbClose() async{
-    final db = await database;
+    final db = await SqLiteDbHelper.instance.database;
 
     db!.close();
   }

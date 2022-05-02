@@ -1,19 +1,22 @@
 import 'dart:collection';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
 
+DatabaseReference userRef = FirebaseDatabase.instance.ref("users");
 
 class Chat{
 
   Chat();
 
-  Chat.construct({required this.message, required this.senderId, required this.groupCode, required this.time});
+  Chat.construct({required this.message, required this.senderId, required this.groupCode, required this.time, required this.userName});
   Chat.fromMap(Map chat)
       : message = chat["message"],
         senderId = chat["senderId"],
         groupCode = chat["groupCode"],
-        time = chat["time"];
+        time = chat["time"],
+        userName = chat["username"];
 
-  late String message, senderId, groupCode;
+  late String message, senderId, groupCode, userName;
   late int time;
 
   void setMessage(String? value) {
@@ -42,6 +45,7 @@ class Chat{
     chat["senderId"] = senderId;
     chat["groupCode"] = groupCode;
     chat["time"] = time;
+    chat["username"] = userName;
     return chat;
   }
 }

@@ -1,8 +1,9 @@
+import 'dart:io';
+
+import 'package:college_app/Login_route.dart';
 import 'package:college_app/group_chat_route.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'models/string_extension.dart';
-import 'package:firebase_database/firebase_database.dart';
 
 class JoinGroup extends StatefulWidget{
   const JoinGroup({Key? key}) : super(key: key);
@@ -15,11 +16,11 @@ class _JoinGroupState extends State<JoinGroup>{
 
   final _formKey = GlobalKey<FormState>();
 
-  late String code;
-  String? errorMsg;
+  late String _code;
+  String? _errorMsg;
 
-  void setCode(String? value){
-    code = value?? "";
+  void _setCode(String? value){
+    _code = value?? "";
   }
 
   String? _validateField(String? value) {
@@ -34,36 +35,50 @@ class _JoinGroupState extends State<JoinGroup>{
     return null;
   }
 
-  void startGroupChatRoute(){
+  void _startGroupChatRoute(){
     Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (BuildContext context) {
-        return ChatRoute(groupCode: code);
+        return ChatRoute(groupCode: _code);
       },
     ));
   }
 
-  void submit() async{
+  void _startLoginRoute(){
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (BuildContext context) {
+        return const Login();
+      },
+    ));
+  }
+
+  void _submit() async{
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       setState(() {
-        errorMsg = null;
+        _errorMsg = null;
       });
-      startGroupChatRoute();
+      _startGroupChatRoute();
     }
+  }
+
+  void _logOut() async{
+    await FirebaseAuth.instance.signOut();
+    _startLoginRoute();
   }
 
   @override
   Widget build(BuildContext context) {
 
     final codeField = Container(
+      width: 300,
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: TextFormField(
         validator: _validateField,
-        onSaved: setCode,
+        onSaved: _setCode,
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
           labelText: "Enter Code",
-          errorText: errorMsg,
+          errorText: _errorMsg,
           hintText: "Group Code ...",
           hintStyle: const TextStyle(color: Colors.grey),
           labelStyle: const TextStyle(color: Colors.grey),
@@ -108,7 +123,7 @@ class _JoinGroupState extends State<JoinGroup>{
       margin: const EdgeInsets.symmetric(vertical: 20),
       child: ElevatedButton(
         child: const Center(child: Text('JOIN'),),
-        onPressed: submit,
+        onPressed: _submit,
         style: ElevatedButton.styleFrom(
             primary: const Color(0xff66C047),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -132,9 +147,45 @@ class _JoinGroupState extends State<JoinGroup>{
       ),
     );
 
-    return Padding(
+    final body = Padding(
       padding: const EdgeInsets.all(50.0),
       child: form,
+    );
+
+    return WillPopScope(
+        onWillPop: () async {
+          exit(0);
+          },
+        child:Scaffold(
+          appBar: AppBar(
+            backgroundColor: const Color(0xff253412),
+            automaticallyImplyLeading: false,
+            elevation: 1.0,
+            title: const Text(
+              "Join Group",
+            ),
+            actions: [
+              PopupMenuButton(
+                onSelected: (value) {
+                  if (value == 1){
+                    _logOut();
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    child: Text("logout"),
+                    value: 1,
+                  ),
+                ],
+              ),
+            ],
+          ),
+          body: body,
+          backgroundColor: const Color(0xff021606),
+          // This prevents the attempt to resize the screen when the keyboard
+          // is opened
+          resizeToAvoidBottomInset: false,
+        ),
     );
 
   }
