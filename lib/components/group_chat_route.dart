@@ -9,7 +9,7 @@ import 'package:flutter/scheduler.dart';
 
 
 import 'chat_tile.dart';
-import 'models/chat.dart';
+import '../models/chat.dart';
 
 Icon emoji = const Icon(Icons.emoji_emotions_outlined, size: 30 , color: Color(0xffA8B0A2));
 ImageIcon sendBtn = const ImageIcon(AssetImage("assets/images/send_button.png"), size: 30,);

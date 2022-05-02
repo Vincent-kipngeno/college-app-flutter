@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'models/chat.dart';
+import '../models/chat.dart';
 
 class CustomChatBubble extends CustomPainter {
   CustomChatBubble({required this.color, required this.isOwn});

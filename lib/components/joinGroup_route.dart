@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:college_app/Login_route.dart';
-import 'package:college_app/group_chat_route.dart';
+import 'package:college_app/components/Login_route.dart';
+import 'package:college_app/components/group_chat_route.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
